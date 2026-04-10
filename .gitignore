@@ -1,0 +1,7 @@
+# Personal data — NEVER commit
+private/
+private/**
+
+# Temp files
+/tmp/
+*.tmp
