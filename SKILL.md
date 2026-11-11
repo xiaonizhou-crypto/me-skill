@@ -37,11 +37,11 @@ Run in Claude Code:
 
 This will:
 1. Authenticate with your Feishu account via `lark-cli`
-2. Pull your recent 30 days of messages (stored locally, never uploaded)
+2. With your approval, retrieve your own messages from a chosen date range (up to 30 days) into a temporary local directory
 3. Analyze your communication patterns, tone, and relationships
-4. Generate your personal profile files in `private/` (git-ignored, only on your machine)
+4. Generate approved personal profile files in `private/` (local files excluded from normal Git adds)
 
-**Your data never leaves your machine. The `private/` directory is in `.gitignore`.**
+**Local storage is not local-only processing.** `private/` is excluded from normal Git commits, but an AI coding tool may send message content and derived profiles to its configured model provider for analysis. Review account, provider and organization policies first; use redacted input and the minimum date range needed.
 
 ### 4. Use
 
@@ -96,7 +96,7 @@ The `/me setup` command analyzes your Feishu data to build three personal profil
 | `private/voice-rules.md` | How you say yes/no/thanks, who you call nicknames, your level of formality |
 | `private/relationship-map.md` | Your frequent collaborators, their roles, how you address them, which groups matter |
 
-All files are stored in `private/` which is **git-ignored**. Your personal data stays on your machine.
+All files are stored in `private/` which is **git-ignored**. This describes local file storage, not where AI processing occurs. Analysis can send content to the configured model provider.
 
 ### What data is accessed?
 
@@ -131,11 +131,11 @@ me/
 ├── SKILL.md              ← You are here (public, safe to share)
 ├── reference/
 │   └── setup-prompt.md   ← Instructions for /me setup analysis
-├── private/              ← YOUR data (git-ignored, never shared)
+├── private/              ← YOUR data (git-ignored; model access requires consent)
 │   ├── persona.md
 │   ├── voice-rules.md
 │   └── relationship-map.md
-└── .gitignore            ← Ensures private/ is never committed
+└── .gitignore            ← Excludes private/ from normal Git adds; force-add and other upload tools can bypass it
 ```
 
 ---
@@ -179,10 +179,10 @@ me/
 
 ### 数据安全
 
-- 所有个人数据只存在你本地的 `private/` 目录
-- `private/` 已加入 `.gitignore`，不会被提交到 git
+- 画像文件写入本地 `private/` 目录；本地保存不等于仅在本地处理
+- `private/` 已加入 `.gitignore`，默认不会被 Git 添加；强制添加或其他上传工具仍可能上传它
 - 分析过程中的临时数据用完即删
-- 不访问别人的私聊、不上传任何数据
+- 只按已授权范围读取本人消息；AI 分析可能把消息和画像发送给所配置的模型服务商，必须先确认数据范围与处理方式
 
 ### 授权域
 
@@ -191,3 +191,11 @@ me/
 ```bash
 lark-cli auth login --domain im,vc,calendar,contact,docs,minutes
 ```
+
+## Consent and limits / 授权与边界
+
+Before setup, show the date range, data categories, model provider, and planned files. Explain that local execution and `.gitignore` do not guarantee local-only AI processing. Wait for explicit consent before retrieving or analyzing messages. Do not send messages, upload files, or add contacts as part of calibration.
+
+首次使用前明确告知读取的日期范围、数据类别、模型服务商及拟生成文件，得到本人同意后再取数和分析。默认先做小范围校准；本人发送的消息也可能包含他人隐私或客户秘密。先脱敏，不把客户保密信息写入可复用画像。
+
+Temporary-file cleanup does not delete model-provider logs, AI-tool transcripts, caches or backups. Their retention and deletion depend on the configured services. Do not promise complete deletion or local-only processing without verifying the actual configuration.

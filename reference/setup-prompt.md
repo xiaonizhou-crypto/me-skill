@@ -4,6 +4,10 @@ This document guides the setup process. When a user runs `/me setup`, follow the
 
 ---
 
+## Step 0: Confirm scope and processing
+
+Explain the proposed message date range (start small; up to 30 days only when requested), authorized data categories, local output files and configured model provider. Message content and profiles may be sent to that provider when analyzed by the AI tool. Ask for explicit consent before fetching or analyzing. If the provider or account policy is unknown, pause and resolve it. Redact personal/client information and exclude confidential client chats. `.gitignore` protects normal Git adds only; it does not prevent AI-tool uploads.
+
 ## Step 1: Authenticate & Identify User
 
 ```bash
@@ -22,18 +26,26 @@ If already authenticated, skip to Step 2.
 
 ---
 
-## Step 2: Pull 30 Days of Messages
+## Step 2: Retrieve only the approved date range
+
+Use a restricted temporary directory. Keep the returned directory path for the following steps, without printing message contents. Retrieval failure removes the temporary file immediately. Validate/redact locally before allowing the AI tool to read the content; if you cannot safely redact it, ask the user for an approved redacted export instead. Do not copy sensitive raw data to `private/`.
 
 ```bash
-lark-cli im +messages-search \
-  --start "<30 days ago ISO8601>" \
-  --end "<now ISO8601>" \
+umask 077
+ME_SETUP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/me-setup.XXXXXX")"
+if ! lark-cli im +messages-search \
+  --start "<approved start ISO8601>" \
+  --end "<approved end ISO8601>" \
   --sender "<user_open_id>" \
   --page-all \
-  --format json > /tmp/me-setup-msgs.json
+  --format json > "$ME_SETUP_DIR/messages.json"; then
+  rm -rf -- "$ME_SETUP_DIR"
+  exit 1
+fi
+printf '%s\n' "$ME_SETUP_DIR"
 ```
 
-This pulls only the user's own sent messages. No one else's private data is accessed.
+This filters for the user's own sent messages, which can still contain other people's or clients' confidential information. Check and redact it before model analysis.
 
 ---
 
@@ -150,11 +162,7 @@ Create `private/` directory and write three files:
 
 ## Step 5: Cleanup
 
-Delete temporary data file:
-
-```bash
-rm -f /tmp/me-setup-msgs.json
-```
+After successful calibration, or if any subsequent step fails, remove the exact temporary directory returned in Step 2. Validate that it is the expected `me-setup.*` directory before removing it. An interrupted agent session may leave files behind; report this possibility instead of promising automatic cleanup. Do not claim that file removal deletes AI-tool transcripts, provider logs or backups. Apply those services' retention/deletion controls separately.
 
 ---
 
@@ -163,5 +171,5 @@ rm -f /tmp/me-setup-msgs.json
 Tell the user:
 - Setup complete
 - Show a summary of what was found (top 3 catchphrases, peak hours, key collaborators)
-- Remind them that all data is in `private/` and git-ignored
+- State which profiles were saved locally and which provider processed the input; remind them that git-ignore is not an upload barrier
 - They can now use `/me`, `/me catch-up`, `/me reply`, etc.
